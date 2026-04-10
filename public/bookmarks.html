@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bookmark Manager</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      align-items: flex-start;
+      padding: 2rem 1rem;
+    }
+
+    .page-wrapper {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card {
+      max-width: 100%;
+      text-align: left;
+    }
+
+    .card h2 {
+      font-size: 1.2rem;
+      color: #2d3748;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .input-error {
+      border-color: #e53e3e !important;
+      box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15) !important;
+    }
+
+    .error-msg {
+      color: #e53e3e;
+      font-size: 0.85rem;
+      margin-top: -0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .success-banner {
+      background: #c6f6d5;
+      color: #276749;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      display: none;
+    }
+
+    /* Bookmark input row */
+    .bookmark-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .bookmark-input-row input {
+      margin-bottom: 0;
+      flex: 1;
+    }
+
+    .btn-add {
+      width: auto;
+      padding: 0.75rem 1.2rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Bookmark list */
+    .bookmark-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .bookmark-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+    }
+
+    .bookmark-favicon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .bookmark-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .bookmark-title {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bookmark-url {
+      color: #4f46e5;
+      font-size: 0.8rem;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+
+    .bookmark-url:hover {
+      text-decoration: underline;
+    }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      color: #a0aec0;
+      cursor: pointer;
+      font-size: 1.1rem;
+      width: auto;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-delete:hover {
+      background: #fed7d7;
+      color: #e53e3e;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #a0aec0;
+      font-size: 0.9rem;
+      padding: 1.5rem 0;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .page-header img {
+      width: 48px;
+      margin: 0;
+    }
+
+    .page-header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.3rem;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field input,
+    .field textarea {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- Header -->
+    <div class="card">
+      <div class="page-header">
+        <img src="/images/logo.png" alt="Logo" class="logo" />
+        <div>
+          <h1>Bookmark Manager</h1>
+          <p style="margin:0;">Save and organise your favourite links</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Info Form -->
+    <div class="card">
+      <h2>Your Details</h2>
+      <div id="userSuccess" class="success-banner">Details saved successfully!</div>
+
+      <form id="userForm" novalidate>
+        <div class="field">
+          <label for="userName">Full Name</label>
+          <input type="text" id="userName" placeholder="e.g. Sagi Appel" />
+          <div class="error-msg" id="nameError"></div>
+        </div>
+
+        <div class="field">
+          <label for="userEmail">Email Address</label>
+          <input type="email" id="userEmail" placeholder="e.g. sagi@example.com" />
+          <div class="error-msg" id="emailError"></div>
+        </div>
+
+        <div class="field">
+          <label for="userMessage">Message / Notes</label>
+          <textarea id="userMessage" placeholder="Write a note about how you use this bookmark manager..."></textarea>
+        </div>
+
+        <button type="submit">Save Details</button>
+      </form>
+    </div>
+
+    <!-- Bookmark Manager -->
+    <div class="card">
+      <h2>My Bookmarks</h2>
+
+      <div class="field">
+        <label for="bmTitle">Title</label>
+        <input type="text" id="bmTitle" placeholder="e.g. MDN Web Docs" />
+      </div>
+
+      <div class="field">
+        <label for="bmUrl">URL</label>
+        <div class="bookmark-input-row">
+          <input type="url" id="bmUrl" placeholder="https://example.com" />
+          <button class="btn-add" onclick="addBookmark()">+ Add</button>
+        </div>
+        <div class="error-msg" id="bmError"></div>
+      </div>
+
+      <div class="field" id="searchField" style="display:none;">
+        <label for="bmSearch">Search bookmarks</label>
+        <input type="search" id="bmSearch" placeholder="Filter by title..." />
+      </div>
+
+      <ul class="bookmark-list" id="bookmarkList"></ul>
+    </div>
+
+    <a href="/">← Back Home</a>
+  </div>
+
+  <script>
+    // ── Email validation ──────────────────────────────────────────
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    }
+
+    // ── User form ─────────────────────────────────────────────────
+    document.getElementById('userForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      let valid = true;
+
+      const name  = document.getElementById('userName');
+      const email = document.getElementById('userEmail');
+
+      // Reset
+      [name, email].forEach(el => el.classList.remove('input-error'));
+      document.getElementById('nameError').textContent  = '';
+      document.getElementById('emailError').textContent = '';
+      document.getElementById('userSuccess').style.display = 'none';
+
+      if (!name.value.trim()) {
+        name.classList.add('input-error');
+        document.getElementById('nameError').textContent = 'Name is required.';
+        valid = false;
+      }
+
+      if (!email.value.trim()) {
+        email.classList.add('input-error');
+        document.getElementById('emailError').textContent = 'Email is required.';
+        valid = false;
+      } else if (!isValidEmail(email.value)) {
+        email.classList.add('input-error');
+        document.getElementById('emailError').textContent = 'Please enter a valid email address (e.g. user@example.com).';
+        valid = false;
+      }
+
+      if (valid) {
+        document.getElementById('userSuccess').style.display = 'block';
+        // Persist to localStorage so it survives a refresh
+        localStorage.setItem('bm_user', JSON.stringify({
+          name: name.value.trim(),
+          email: email.value.trim(),
+          message: document.getElementById('userMessage').value.trim()
+        }));
+      }
+    });
+
+    // Live email validation feedback while the user types
+    document.getElementById('userEmail').addEventListener('input', function () {
+      const emailError = document.getElementById('emailError');
+      if (this.value && !isValidEmail(this.value)) {
+        this.classList.add('input-error');
+        emailError.textContent = 'Invalid format — expected user@domain.com';
+      } else {
+        this.classList.remove('input-error');
+        emailError.textContent = '';
+      }
+    });
+
+    // ── Bookmarks ─────────────────────────────────────────────────
+    let bookmarks = JSON.parse(localStorage.getItem('bm_list') || '[]');
+
+    function saveBookmarks() {
+      localStorage.setItem('bm_list', JSON.stringify(bookmarks));
+    }
+
+    function getFaviconUrl(url) {
+      try {
+        const hostname = new URL(url).hostname;
+        return `https://www.google.com/s2/favicons?sz=32&domain=${hostname}`;
+      } catch {
+        return '';
+      }
+    }
+
+    function renderBookmarks() {
+      const list   = document.getElementById('bookmarkList');
+      const query  = (document.getElementById('bmSearch').value || '').toLowerCase().trim();
+      const filtered = bookmarks.filter(bm => bm.title.toLowerCase().includes(query));
+
+      // Show/hide the search bar depending on whether there are bookmarks
+      document.getElementById('searchField').style.display = bookmarks.length > 0 ? '' : 'none';
+
+      list.innerHTML = '';
+
+      if (bookmarks.length === 0) {
+        list.innerHTML = '<div class="empty-state">No bookmarks yet. Add one above!</div>';
+        return;
+      }
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty-state">No bookmarks match your search.</div>';
+        return;
+      }
+
+      filtered.forEach((bm) => {
+        // Use the original index so delete still works correctly
+        const originalIndex = bookmarks.indexOf(bm);
+        const li = document.createElement('li');
+        li.className = 'bookmark-item';
+        li.innerHTML = `
+          <img class="bookmark-favicon" src="${getFaviconUrl(bm.url)}" alt="" onerror="this.style.display='none'" />
+          <div class="bookmark-info">
+            <div class="bookmark-title">${escapeHtml(bm.title)}</div>
+            <a class="bookmark-url" href="${escapeHtml(bm.url)}" target="_blank" rel="noopener">${escapeHtml(bm.url)}</a>
+          </div>
+          <button class="btn-delete" title="Remove bookmark" onclick="removeBookmark(${originalIndex})">✕</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function addBookmark() {
+      const titleInput = document.getElementById('bmTitle');
+      const urlInput   = document.getElementById('bmUrl');
+      const bmError    = document.getElementById('bmError');
+
+      bmError.textContent = '';
+      urlInput.classList.remove('input-error');
+
+      const title = titleInput.value.trim() || urlInput.value.trim();
+      const url   = urlInput.value.trim();
+
+      if (!url) {
+        urlInput.classList.add('input-error');
+        bmError.textContent = 'Please enter a URL.';
+        return;
+      }
+
+      // Prepend https:// if the user forgot
+      const fullUrl = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+
+      try {
+        new URL(fullUrl); // throws if invalid
+      } catch {
+        urlInput.classList.add('input-error');
+        bmError.textContent = 'That doesn\'t look like a valid URL.';
+        return;
+      }
+
+      bookmarks.unshift({ title: title || fullUrl, url: fullUrl });
+      saveBookmarks();
+      renderBookmarks();
+
+      titleInput.value = '';
+      urlInput.value   = '';
+    }
+
+    document.getElementById('bmSearch').addEventListener('input', renderBookmarks);
+
+    // Allow pressing Enter in the URL field to add
+    document.getElementById('bmUrl').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addBookmark(); }
+    });
+
+    function removeBookmark(index) {
+      bookmarks.splice(index, 1);
+      saveBookmarks();
+      renderBookmarks();
+    }
+
+    // ── Restore saved user details on load ────────────────────────
+    const savedUser = JSON.parse(localStorage.getItem('bm_user') || 'null');
+    if (savedUser) {
+      document.getElementById('userName').value    = savedUser.name    || '';
+      document.getElementById('userEmail').value   = savedUser.email   || '';
+      document.getElementById('userMessage').value = savedUser.message || '';
+    }
+
+    renderBookmarks();
+  </script>
+</body>
+</html>
